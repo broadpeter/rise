@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="theme-color" content="#141414">
+		<link rel="manifest" href="./manifest.json">
+		<title>Activity Done</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+		    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+		<style>
+			:root {
+				color-scheme: dark;
+				font-family: 'Inter', sans-serif;
+				background: #141414;
+				color: #f5f5f5;
+				--muted: #a3a3a3;
+				--surface: #222222;
+				--border: #444444;
+			}
+
+			* { box-sizing: border-box; }
+
+			body {
+				min-height: 100vh;
+				margin: 0;
+				padding: 32px 20px 48px;
+				-webkit-font-smoothing: antialiased;
+			}
+			body.activity-theme { background: #141414; }
+
+			main {
+				max-width: 440px;
+				margin: 0 auto;
+			}
+
+			[hidden] { display: none !important; }
+			h1 { margin: 0 0 24px; font-size: 21px; font-weight: 500; }
+			.hero {
+				padding: 20px 18px;
+				border-radius: 8px;
+				background: var(--surface);
+			}
+			.hero-title {
+				margin: 0 0 20px;
+				font-size: clamp(26px, 8vw, 34px);
+				font-weight: 600;
+				line-height: 1.15;
+			}
+
+			button {
+				width: 100%;
+				min-height: 46px;
+				border: 0;
+				border-radius: 6px;
+				background: #f5f5f5;
+				color: #141414;
+				font: 500 15px 'Inter', sans-serif;
+				cursor: pointer;
+			}
+
+			button:hover { background: #dcdcdc; }
+			button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+			.not-completed-button {
+				margin-top: 12px;
+				background: transparent;
+				border: 1px solid var(--border);
+				color: #f5f5f5;
+			}
+			.not-completed-button:hover { background: var(--surface); }
+			.timer-label { margin: 0 0 4px; color: var(--muted); font-size: 14px; }
+			.timer {
+				margin: 0 0 24px;
+				font-size: 56px;
+				font-weight: 600;
+				font-variant-numeric: tabular-nums;
+				line-height: 1.15;
+			}
+			.undo-button {
+				display: block;
+				width: auto;
+				min-height: 0;
+				margin: 12px 0 0 auto;
+				padding: 0;
+				background: none;
+				color: #f5f5f5;
+				font-size: 14px;
+			}
+			.undo-button:hover:not(:disabled) { background: none; text-decoration: underline; }
+			button:disabled { cursor: not-allowed; color: var(--muted); }
+
+			.progress { margin-top: 40px; }
+			.progress h2 { margin: 0 0 8px; font-size: 18px; font-weight: 500; }
+			.count { margin: 0 0 18px; font-size: 14px; color: #f5f5f5; }
+			#clear-button { color: var(--muted); }
+			.clear-confirmation { margin-top: 18px; }
+			.clear-confirmation p { font-size: 14px; line-height: 1.5; }
+			.account {
+				margin: 0 0 24px 0;
+				padding: 12px 14px;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				background: var(--surface);
+			}
+			.sync-row { display: flex; align-items: center; gap: 8px; }
+			.account label {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: -1px;
+				overflow: hidden;
+				clip: rect(0, 0, 0, 0);
+				white-space: nowrap;
+				border: 0;
+			}
+			.account input {
+				flex: 1;
+				width: 0;
+				min-width: 0;
+				min-height: 0;
+				margin: 0;
+				padding: 8px 9px;
+				border: 1px solid var(--border);
+				border-radius: 5px;
+				background: #141414;
+				color: #f5f5f5;
+				font: 13px 'Inter', sans-serif;
+			}
+			.account input::placeholder { color: var(--muted); opacity: 1; }
+			.account .sync-button {
+				width: auto;
+				min-height: 0;
+				padding: 0;
+				border: 0;
+				border-radius: 0;
+				background: none;
+				color: var(--muted);
+				font: 13px 'Inter', sans-serif;
+				white-space: nowrap;
+			}
+			.account .sync-button:hover:not(:disabled) { background: none; color: #fff; }
+			.account p { margin: 0; font-size: 14px; overflow-wrap: anywhere; }
+			#account-email { flex: 1; }
+			#account-status:empty { display: none; }
+			#account-status { margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+			.ticks {
+				display: grid;
+				grid-template-columns: repeat(7, minmax(0, 1fr));
+				row-gap: 8px;
+			}
+
+			.tick {
+				display: block;
+				width: 70%;
+				aspect-ratio: 1;
+				margin: auto;
+				background: #fff;
+				border-radius: 50%;
+			}
+			.tick--not-done { background: transparent; border: 2px solid #fff; }
+		</style>
+	</head>
+	<body>
+		<main>
+			<section id="home-view">
+
+				<section class="account" aria-label="Account">
+					<form id="sign-in-form" class="sync-row">
+						<label for="email">Email</label>
+						<input id="email" type="email" autocomplete="email" required placeholder="you@example.com">
+						<button class="sync-button" id="sign-in-button" type="submit">Sign in</button>
+					</form>
+					<div class="sync-row" id="signed-in-account" hidden>
+						<p id="account-email"></p>
+						<button class="sync-button" id="sign-out-button" type="button">Sign out</button>
+					</div>
+					<p id="account-status" role="status" aria-live="polite"></p>
+				</section>
+				<div class="hero">
+	<p class="hero-title">Start something you've been avoiding.</p>
+	<button id="start-button" type="button">Start</button>
+</div>
+				<section class="progress" aria-label="Activity history">
+				<p class="count" id="count" aria-live="polite">0 done</p>
+					<div class="ticks" id="ticks" aria-hidden="true"></div>
+					<button class="undo-button" id="undo-button" type="button" hidden>Undo activity</button>
+					<button class="undo-button" id="clear-button" type="button" hidden>Clear all history</button>
+					<div class="clear-confirmation" id="clear-confirmation" role="group" aria-label="Confirm clear history" hidden>
+						<p>Delete all activity history for this account? This cannot be undone.</p>
+						<button id="confirm-clear-button" type="button">Yes, delete all</button>
+						<button class="undo-button" id="cancel-clear-button" type="button">Cancel</button>
+					</div>
+					<button class="undo-button" id="retry-button" type="button" hidden>Retry history</button>
+				</section>
+			</section>
+		<section id="activity-view" hidden>
+	<h1>Keep going</h1>
+		<p class="timer-label">Do what you can in five minutes. You can stop when the timer runs out</p>
+	<p class="timer" id="timer" role="timer">5:00</p>
+	<button id="done-button" type="button">Done</button>
+	<p id="activity-status" role="alert"></p>
+	<button class="not-completed-button" id="not-done-button" type="button">Not done</button>
+	<button class="undo-button" id="skip-button" type="button">Skip</button>
+</section>
+		</main>
+		<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+		<script>
+			const SUPABASE_URL = 'https://uucsqoehpahdxspxwcug.supabase.co';
+			const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_3AfYWxszM3n3nTi3mhZNcQ_I2hOTlD6';
+			const configured = SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_PUBLISHABLE_KEY !== 'YOUR_SUPABASE_PUBLISHABLE_KEY';
+			const db = configured && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
+
+			if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
+				window.addEventListener('load', () => {
+					navigator.serviceWorker.register('./sw.js').catch(error => {
+						console.error('Service worker registration failed:', error);
+					});
+				});
+			}
+
+			const homeView = document.getElementById('home-view');
+			const activityView = document.getElementById('activity-view');
+			const button = document.getElementById('done-button');
+			const notDoneButton = document.getElementById('not-done-button');
+			const skipButton = document.getElementById('skip-button');
+			const activityStatus = document.getElementById('activity-status');
+			const undoButton = document.getElementById('undo-button');
+			const clearButton = document.getElementById('clear-button');
+			const clearConfirmation = document.getElementById('clear-confirmation');
+			const confirmClearButton = document.getElementById('confirm-clear-button');
+			const cancelClearButton = document.getElementById('cancel-clear-button');
+			const count = document.getElementById('count');
+			const ticks = document.getElementById('ticks');
+			const startButton = document.getElementById('start-button');
+			const signInForm = document.getElementById('sign-in-form');
+			const signInButton = document.getElementById('sign-in-button');
+			const signOutButton = document.getElementById('sign-out-button');
+			const accountEmail = document.getElementById('account-email');
+			const accountStatus = document.getElementById('account-status');
+			const retryButton = document.getElementById('retry-button');
+			const timer = document.getElementById('timer');
+			let user = null;
+			let activities = [];
+			let undoActivityId = null;
+			let loading = true;
+			let loadFailed = false;
+			let saving = false;
+			let sessionVersion = 0;
+			let initialized = false;
+			let timerInterval = null;
+			let timerEndsAt = 0;
+
+			function renderHistory() {
+				ticks.replaceChildren();
+				for (const activity of activities) {
+					const tick = document.createElement('span');
+					tick.className = activity.is_completed === false ? 'tick tick--not-done' : 'tick';
+					ticks.append(tick);
+				}
+				const notDoneCount = activities.filter(activity => activity.is_completed === false).length;
+				count.textContent = `${activities.length - notDoneCount} done` + (notDoneCount ? `, ${notDoneCount} not done` : '');
+				if (!user || !activities.length || loading) clearConfirmation.hidden = true;
+				undoButton.hidden = !undoActivityId || !user;
+				undoButton.disabled = loading || saving;
+				clearButton.hidden = activities.length === 0 || !user || !clearConfirmation.hidden;
+				clearButton.disabled = loading || saving;
+				confirmClearButton.disabled = loading || saving;
+				cancelClearButton.disabled = saving;
+				startButton.disabled = !user || loading || saving;
+				button.disabled = !user || loading || saving;
+				notDoneButton.disabled = !user || loading || saving;
+				skipButton.disabled = saving;
+				signOutButton.disabled = saving;
+				retryButton.hidden = !user || !loadFailed;
+			}
+
+			async function loadHistory() {
+				const version = sessionVersion;
+				const accountId = user.id;
+				loading = true;
+				loadFailed = false;
+				accountStatus.textContent = 'Loading history...';
+				renderHistory();
+				const rows = [];
+				try {
+					while (true) {
+						const { data, error } = await db.from('rise_activities')
+							.select('id, user_id, completed_at, shape, color, is_completed')
+							.eq('user_id', accountId)
+							.order('completed_at', { ascending: true })
+							.order('id', { ascending: true })
+							.range(rows.length, rows.length + 999);
+						if (error) throw error;
+						rows.push(...data);
+						if (data.length < 1000) break;
+					}
+					if (version !== sessionVersion) return;
+					activities = rows;
+					loading = false;
+					accountStatus.textContent = '';
+				} catch (error) {
+					if (version !== sessionVersion) return;
+					loadFailed = true;
+					accountStatus.textContent = `Could not load history: ${error.message}`;
+				} finally {
+					if (version === sessionVersion) renderHistory();
+				}
+			}
+
+			if (db) {
+				db.auth.onAuthStateChange((_event, session) => {
+					const nextUser = session?.user || null;
+					if (initialized && nextUser?.id === user?.id) return;
+					initialized = true;
+					sessionVersion += 1;
+					user = nextUser;
+					activities = [];
+					undoActivityId = null;
+					loading = !!user;
+					loadFailed = false;
+					signInForm.hidden = !!user;
+					accountEmail.textContent = user?.email || '';
+					document.getElementById('signed-in-account').hidden = !user;
+					accountStatus.textContent = user ? '' : 'Sign in to save your activities.';
+					renderHistory();
+					if (user) setTimeout(loadHistory, 0);
+				});
+			} else {
+				loading = false;
+				signInButton.disabled = true;
+				accountStatus.textContent = configured ? 'Could not load Supabase. Check your connection.' : 'Set your Supabase URL and publishable key to enable sign-in.';
+			}
+			renderHistory();
+
+			signInForm.addEventListener('submit', async event => {
+				event.preventDefault();
+				if (!db) return;
+				signInButton.disabled = true;
+				accountStatus.textContent = 'Sending sign-in link...';
+				const { error } = await db.auth.signInWithOtp({
+					email: document.getElementById('email').value.trim(),
+					options: { emailRedirectTo: location.origin + location.pathname }
+				});
+				accountStatus.textContent = error ? `Could not send link: ${error.message}` : 'Check your email for a sign-in link.';
+				signInButton.disabled = false;
+			});
+
+			signOutButton.addEventListener('click', async () => {
+				signOutButton.disabled = true;
+				const { error } = await db.auth.signOut();
+				if (error) accountStatus.textContent = `Could not sign out: ${error.message}`;
+				signOutButton.disabled = false;
+			});
+			retryButton.addEventListener('click', loadHistory);
+
+			function updateTimer() {
+				const seconds = Math.max(0, Math.ceil((timerEndsAt - Date.now()) / 1000));
+				timer.textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+				if (seconds === 0) {
+					clearInterval(timerInterval);
+					timerInterval = null;
+				}
+			}
+
+			function startTimer() {
+				clearInterval(timerInterval);
+				document.body.classList.add('activity-theme');
+				timerEndsAt = Date.now() + 5 * 60 * 1000;
+				updateTimer();
+				timerInterval = setInterval(updateTimer, 250);
+			}
+
+			startButton.addEventListener('click', () => {
+				if (!user || loading || saving) return;
+				activityStatus.textContent = '';
+				homeView.hidden = true;
+				activityView.hidden = false;
+				startTimer();
+			});
+
+			function showHome() {
+				clearInterval(timerInterval);
+				timerInterval = null;
+				activityView.hidden = true;
+				homeView.hidden = false;
+				document.body.classList.remove('activity-theme');
+			}
+
+			skipButton.addEventListener('click', () => {
+				if (saving) return;
+				showHome();
+			});
+
+			async function saveActivity(isCompleted) {
+				if (!user || loading || saving) return;
+				activityStatus.textContent = '';
+				saving = true;
+				renderHistory();
+				const accountId = user.id;
+				const version = sessionVersion;
+				try {
+					const { data, error } = await db.from('rise_activities')
+						.insert({ user_id: accountId, shape: 'circle', color: '#ffffff', is_completed: isCompleted })
+						.select('id, user_id, completed_at, shape, color, is_completed').single();
+					if (error) throw error;
+					if (version === sessionVersion) {
+						activities.push(data);
+						activities.sort((first, second) => first.completed_at.localeCompare(second.completed_at) || first.id.localeCompare(second.id));
+						undoActivityId = data.id;
+						accountStatus.textContent = '';
+						showHome();
+					}
+				} catch (error) {
+					if (version === sessionVersion) activityStatus.textContent = `Could not save activity: ${error.message}`;
+				} finally {
+					saving = false;
+					renderHistory();
+				}
+			}
+
+			button.addEventListener('click', () => saveActivity(true));
+			notDoneButton.addEventListener('click', () => saveActivity(false));
+
+			undoButton.addEventListener('click', async () => {
+				if (!user || loading || saving || !undoActivityId) return;
+				saving = true;
+				renderHistory();
+				const activityId = undoActivityId;
+				const version = sessionVersion;
+				const accountId = user.id;
+				try {
+					const { data, error } = await db.from('rise_activities').delete()
+						.eq('id', activityId).eq('user_id', accountId).select('id');
+					if (error) throw error;
+					if (data.length !== 1) throw new Error('Activity was not found. Retry history.');
+					if (version === sessionVersion) {
+						activities = activities.filter(activity => activity.id !== activityId);
+						undoActivityId = null;
+						accountStatus.textContent = '';
+					}
+				} catch (error) {
+					if (version === sessionVersion) accountStatus.textContent = `Could not undo activity: ${error.message}`;
+				} finally {
+					saving = false;
+					renderHistory();
+				}
+			});
+
+			clearButton.addEventListener('click', () => {
+				if (!user || loading || saving || !activities.length) return;
+				clearConfirmation.hidden = false;
+				renderHistory();
+				confirmClearButton.focus();
+			});
+
+			cancelClearButton.addEventListener('click', () => {
+				clearConfirmation.hidden = true;
+				renderHistory();
+				clearButton.focus();
+			});
+
+			confirmClearButton.addEventListener('click', async () => {
+				if (!user || loading || saving || !activities.length || clearConfirmation.hidden) return;
+				const accountId = user.id;
+				const version = sessionVersion;
+				saving = true;
+				renderHistory();
+				try {
+					const { error } = await db.from('rise_activities').delete().eq('user_id', accountId);
+					if (error) throw error;
+					if (version === sessionVersion) {
+						activities = [];
+						undoActivityId = null;
+						accountStatus.textContent = '';
+					}
+				} catch (error) {
+					if (version === sessionVersion) accountStatus.textContent = `Could not clear history: ${error.message}`;
+				} finally {
+					saving = false;
+					renderHistory();
+				}
+			});
+		</script>
+	</body>
+</html>
