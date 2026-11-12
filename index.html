@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="theme-color" content="#1c1d2b">
 		<link rel="manifest" href="./manifest.json">
-		<title>Activity Done</title>
+		<title>Rise</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -180,7 +180,7 @@
 					<p id="account-status" role="status" aria-live="polite"></p>
 				</section>
 				<div class="hero">
-	<p class="hero-title">Get up and move</p>
+	<p class="hero-title">Let's get up</p>
 	<button id="start-button" type="button">Start</button>
 </div>
 				<section class="progress" aria-label="Activity history">
@@ -198,8 +198,8 @@
 			</section>
 		<section id="activity-view" hidden>
 	<h1>Keep going</h1>
-		<p class="timer-label">Do what you can in five minutes. You can stop when the timer runs out</p>
-	<p class="timer" id="timer" role="timer">5:00</p>
+		<p class="timer-label">Get up in four minutes and start imperfectly</p>
+	<p class="timer" id="timer" role="timer">4:00</p>
 	<button id="done-button" type="button">Done</button>
 	<p id="activity-status" role="alert"></p>
 	<button class="not-completed-button" id="not-done-button" type="button">Not done</button>
@@ -368,7 +368,7 @@
 			function startTimer() {
 				clearInterval(timerInterval);
 				document.body.classList.add('activity-theme');
-				timerEndsAt = Date.now() + 5 * 60 * 1000;
+				timerEndsAt = Date.now() + 4 * 60 * 1000;
 				updateTimer();
 				timerInterval = setInterval(updateTimer, 250);
 			}
